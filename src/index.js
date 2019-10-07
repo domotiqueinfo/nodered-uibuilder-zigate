@@ -303,11 +303,13 @@ var app1 = new Vue({
                                 }else if(d.value >= 50 && d.value <= 120 ){
                                     d.valueString = "90°";
                                 }else if(d.value >= 128 ){
-                                    d.valueString = "120°";
-                                }else if(d.value === 4 ){
-                                    d.valueString = "Vertical";
+                                    d.valueString = "180°";
+                                }else if(d.value == 3 ){
+                                    d.valueString = "Jeté vertical";
+                                }else if(d.value.toString().indexOf("42") == 0 ){
+                                    d.valueString = "Rotation verticale";
                                 }else{
-                                    d.valueString = item.value;
+                                    d.valueString = d.value;
                                 }
                             }
                         }
