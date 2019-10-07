@@ -15,6 +15,7 @@
     You will want to alter this to suite your own needs. To do so,
     copy this file to <userDir>/uibuilder/<url>/src.
 -->
+
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -48,132 +49,291 @@
 
     <link type="text/css" rel="stylesheet" href="../uibuilder/vendor/bootstrap/dist/css/bootstrap.min.css" />
     <link type="text/css" rel="stylesheet" href="../uibuilder/vendor/bootstrap-vue/dist/bootstrap-vue.css" />
-    
+
     <link rel="stylesheet" href="./index.css" media="all">
 </head>
+
 <body>
     <div id="app" v-cloak>
-        
+
         <b-navbar toggleable="lg" type="dark" variant="info">
             <b-navbar-brand href="#">Domotique-Info | ZiGate</b-navbar-brand>
-            
+
             <!-- Right aligned nav items -->
             <b-navbar-nav class="ml-auto">
                 <b-nav-item-dropdown text="Actions" right>
-                  <b-dropdown-item href="#" v-on:click="emitZigatePermitJoinCommand()">Permit Join</b-dropdown-item>
-                  <b-dropdown-item href="#" v-on:click="emitRefreshDevicesCommand()">Refresh Devices</b-dropdown-item>
-                  <b-dropdown-item href="#" v-on:click="emitZigateVersionCommand()">Version</b-dropdown-item>
+                    <b-dropdown-item href="#" v-on:click="emitZigatePermitJoinCommand()">Permit Join</b-dropdown-item>
+                    <b-dropdown-item href="#" v-on:click="emitRefreshDevicesCommand()">Refresh Devices</b-dropdown-item>
+                    <b-dropdown-item href="#" v-on:click="emitZigateVersionCommand()">Version</b-dropdown-item>
                 </b-nav-item-dropdown>
             </b-navbar-nav>
         </b-navbar>
-        
+
         <b-container id="loading" fluid v-if="!isLoaded" class="text-center" style="margin-top : 100px">
             <b-spinner style="width: 3rem; height: 3rem;" label="Large Spinner" type="grow"></b-spinner>
             <div>En cours de chargement...</div>
         </b-container>
         <b-container id="no-devices" v-if="devices.length == 0 && isLoaded" class="text-center" style="margin-top : 100px">
-            <b-card border-variant="info"
-                    header="Je n'ai rien trouvé !"
-                    header-bg-variant="info"
-                    header-text-variant="white"
-                    align="center"
-                    class="text-center">
+            <b-card border-variant="info" header="Je n'ai rien trouvé !" header-bg-variant="info" header-text-variant="white" align="center" class="text-center">
                 <b-card-text>Aucuns périphériques trouvés. Veuillez utiliser le menu "Actions > Permit Join" afin d'ajouter de nouveaux produits</b-card-text>
-              </b-card>
-            
+            </b-card>
+
         </b-container>
         <b-container id="app_container" fluid v-if="devices.length > 0">
             <b-row style="margin-top : 10px;">
                 <b-col v-for="item in devices" v-if="item.type !== undefined" cols="12" sm="12" md="6" lg="4" xl="3">
-                    
-                    <b-card no-body class="overflow-hidden" v-if="item.type === 'onoff'">
-                        <b-card-header> 
-                        <div class="float-left">
-                                {{item.name || item.id}}    
-                            
-                        </div>
-                                <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'onoff' && (item.model !== 'lumi.sensor_magnet' && item.model !== 'lumi.sensor_switch')">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
                         </b-card-header>
                         <b-row no-gutters>
-                          <b-col md="4" class="clearfix text-center" >
-                            <b-card-img center v-if="item.value === 1" src="./images/DEV_LIGHT_on.png" class="rounded-0" style="max-width:150px"></b-card-img>
-                            <b-card-img center v-else src="./images/DEV_LIGHT_off.png" class="rounded-0" style="max-width:150px"></b-card-img>
-                          </b-col>
-                          <b-col md="8">
-                            <b-card-body>
-                              <b-card-sub-title>{{item.manufacturer}}-{{item.model}}</b-card-sub-title>
-                              <b-card-text class="text-center">
-                                <b-button pill variant="outline-primary" style="width:40%" v-on:click="emitZigateOnCommand(item); item.value = 1;">ON</b-button>
-                                <b-button pill variant="outline-primary" style="width:40%" v-on:click="emitZigateOffCommand(item); item.value = 0;">OFF</b-button>
-                              </b-card-text>
-                            </b-card-body>
-                          </b-col>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center v-if="item.value === 1" src="./images/DEV_LIGHT_on.png" class="rounded-0 element-image"></b-card-img>
+                                <b-card-img center v-else src="./images/DEV_LIGHT_off.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    <b-card-text class="text-center">
+                                        <b-button pill variant="outline-primary" style="width:40%" v-on:click="emitZigateOnCommand(item); item.value = 1;">ON</b-button>
+                                        <b-button pill variant="outline-primary" style="width:40%" v-on:click="emitZigateOffCommand(item); item.value = 0;">OFF</b-button>
+                                    </b-card-text>
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="6" class="element-footer-left">
+                                <small class="text-muted">{{item.lastUpdated}}</small>
+                            </b-col>
+                            <b-col md="6" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
                         </b-row>
-                      </b-card>
-                      
+                    </b-card>
+
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'temperature'">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        </b-card-header>
+                        <b-row no-gutters>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center src="./images/DEV_TEMP.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    {{item.value}}°
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="6" class="element-footer-left">
+                                <small class="text-muted">{{item.lastUpdated}}</small>
+                            </b-col>
+                            <b-col md="6" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
+                        </b-row>
+                    </b-card>
+
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'humidity'">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        </b-card-header>
+                        <b-row no-gutters>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center src="./images/DEV_HYGRO.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    {{item.value}}%
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="6" class="element-footer-left">
+                                <small class="text-muted">{{item.lastUpdated}}</small>
+                            </b-col>
+                            <b-col md="6" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
+                        </b-row>
+                    </b-card>
+
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'onoff' && item.model === 'lumi.sensor_magnet'">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        </b-card-header>
+                        <b-row no-gutters>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center v-if="item.value === 1" src="./images/DEV_DOOR_on.png" class="rounded-0 element-image"></b-card-img>
+                                <b-card-img center v-else src="./images/DEV_DOOR_off.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    <div v-if="item.value === 1">Ouvert</div>
+                                    <div v-else>OK</div>
+
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="6" class="element-footer-left">
+                                <small class="text-muted">{{item.lastUpdated}}</small>
+                            </b-col>
+                            <b-col md="6" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
+                        </b-row>
+                    </b-card>
+
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'onoff' && item.model === 'lumi.sensor_switch'">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        </b-card-header>
+                        <b-row no-gutters>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center src="./images/DEV_INTER.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    <div v-if="item.value === 0">Pressé</div>
+                                    <div v-else>Relaché</div>
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="6" class="element-footer-left">
+                                <small class="text-muted">{{item.lastUpdated}}</small>
+                            </b-col>
+                            <b-col md="6" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
+                        </b-row>
+                    </b-card>
+
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'motionsensor'">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        </b-card-header>
+                        <b-row no-gutters>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center v-if="item.value === 1" src="./images/DEV_MOTION_on.png" class="rounded-0 element-image"></b-card-img>
+                                <b-card-img center v-else src="./images/DEV_MOTION_off.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    {{item.lastUpdated}}
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="12" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
+                        </b-row>
+                    </b-card>
+                    
+                    <b-card no-body class="overflow-hidden" v-if="item.type === 'multistate'">
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        </b-card-header>
+                        <b-row no-gutters>
+                            <b-col md="4" class="clearfix text-center">
+                                <b-card-img center v-if="item.value === 1" src="./images/DEV_MOTION_on.png" class="rounded-0 element-image"></b-card-img>
+                                <b-card-img center v-else src="./images/DEV_MOTION_off.png" class="rounded-0 element-image"></b-card-img>
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    {{item.valueString}}
+                                </b-card-body>
+                            </b-col>
+                            <b-col md="6" class="element-footer-left">
+                                <small class="text-muted">{{item.lastUpdated}} (Valeur:{{item.value}})</small>
+                            </b-col>
+                            <b-col md="6" class="element-footer-right">
+                                <small class="text-muted">{{item.model}}</small>
+                            </b-col>
+                        </b-row>
+                    </b-card>
+
                     <b-card no-body class="overflow-hidden" v-if="item.type === 'unknown'">
-                        <b-card-header> 
-                        <div class="float-left">
-                                {{item.name || item.id}}    
-                            
-                        </div>
-                                <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
+                        <b-card-header>
+                            <div class="float-left">
+                                {{item.name || item.id}}
+
+                            </div>
+                            <b-button variant="light" size="sm" class="float-right" v-on:click="editDeviceName(item)">Edit</b-button>
                         </b-card-header>
                         <b-row no-gutters>
-                          <b-col md="4" style="font-size:5em;" class="text-center">
-                            ?
-                          </b-col>
-                          <b-col md="8">
-                            <b-card-body>
-                              <b-card-sub-title>{{item.manufacturer}}-{{item.model}}</b-card-sub-title>
-                              <b-card-text class="text-center">
-                                <b-button pill variant="outline-primary" style="width:40%" v-on:click="emitZigateAutodiscoverCommand(item); item.value = 0;">Discover</b-button>
-                              </b-card-text>
-                            </b-card-body>
-                          </b-col>
+                            <b-col md="4" style="font-size:5em;" class="text-center">
+                                ?
+                            </b-col>
+                            <b-col md="8">
+                                <b-card-body class="element-value">
+                                    <b-card-text class="text-center">
+                                        <b-button pill variant="outline-primary" style="width:40%" v-on:click="emitZigateAutodiscoverCommand(item); item.value = 0;">Discover</b-button>
+                                    </b-card-text>
+                                </b-card-body>
+                            </b-col>
                         </b-row>
-                      </b-card>
-                    
+                    </b-card>
+
                 </b-col>
-                
+
             </b-row>
             <!--<pre v-html="vDevices" class="syntax-highlight"></pre>-->
         </b-container>
         <b-modal id="bv-modal-version" title="Version de votre ZiGate">
             <div class="d-block text-center">
-                 <b-row class="my-1">
+                <b-row class="my-1">
                     <b-col sm="4">
-                      <label for="input-large">Major Version:</label>
+                        <label for="input-large">Major Version:</label>
                     </b-col>
                     <b-col sm="8">
-                      <b-form-input id="input-large" size="lg" disabled v-model="version.majorVersion"></b-form-input>
+                        <b-form-input id="input-large" size="lg" disabled v-model="version.majorVersion"></b-form-input>
                     </b-col>
                 </b-row>
                 <b-row class="my-1">
                     <b-col sm="4">
-                      <label for="input-large">Installer Version:</label>
+                        <label for="input-large">Installer Version:</label>
                     </b-col>
                     <b-col sm="8">
-                      <b-form-input id="input-large" size="lg" disabled v-model="version.installerVersion"></b-form-input>
+                        <b-form-input id="input-large" size="lg" disabled v-model="version.installerVersion"></b-form-input>
                     </b-col>
                 </b-row>
             </div>
-            
-          </b-modal>
-          
-           <b-modal id="bv-modal-change-name" title="Modification du nom" @ok="modalChangeNameOK">
+
+        </b-modal>
+
+        <b-modal id="bv-modal-change-name" title="Modification du nom" @ok="modalChangeNameOK">
             <div class="d-block text-center">
-                 <b-row class="my-1">
+                <b-row class="my-1">
                     <b-col sm="4">
-                      <label for="input-large">Nouveau nom</label>
+                        <label for="input-large">Nouveau nom</label>
                     </b-col>
                     <b-col sm="8">
-                      <b-form-input id="input-large" size="lg" v-model="selectedDevice.name"></b-form-input>
+                        <b-form-input id="input-large" size="lg" v-model="selectedDevice.name"></b-form-input>
                     </b-col>
                 </b-row>
             </div>
-            
-          </b-modal>
+
+        </b-modal>
         <!--
         <b-container id="app_container">
             <b-img src="./images/node-blue-192x192.png" rounded left v-bind="imgProps" alt="Blue Node-RED" class="mt-1 mr-2"></b-img>
@@ -253,14 +413,18 @@
     <script src="../uibuilder/vendor/socket.io/socket.io.js"></script>
 
     <!-- --- Vendor Libraries - Load in the right order --- -->
-    <script src="../uibuilder/vendor/vue/dist/vue.js"></script> <!-- dev version with component compiler -->
+    <script src="../uibuilder/vendor/vue/dist/vue.js"></script>
+    <script src="../uibuilder/vendor/moment/moment.js"></script>
+    <script src="../uibuilder/vendor/moment/locale/fr.js"></script>
+    <!-- dev version with component compiler -->
     <!-- <script src="../uibuilder/vendor/vue/dist/vue.min.js"></script>   prod version with component compiler -->
     <!-- <script src="../uibuilder/vendor/vue/dist/vue.runtime.min.js"></script>   prod version without component compiler -->
     <script src="../uibuilder/vendor/bootstrap-vue/dist/bootstrap-vue.js"></script>
 
     <!-- REQUIRED: Sets up Socket listeners and the msg object -->
     <!-- <script src="./uibuilderfe.js"></script>   //dev version -->
-    <script src="./uibuilderfe.min.js"></script> <!--    //prod version -->
+    <script src="./uibuilderfe.min.js"></script>
+    <!--    //prod version -->
     <!-- OPTIONAL: You probably want this. Put your custom code here -->
     <script src="./index.js"></script>
 

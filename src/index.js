@@ -201,6 +201,8 @@ var app1 = new Vue({
         uibuilder.start()
 
         var vueApp = this
+        
+        moment.locale("fr");
 
         // Example of retrieving data from uibuilder
         vueApp.feVersion = uibuilder.get('version')
@@ -219,33 +221,113 @@ var app1 = new Vue({
                 console.log("Devices", newVal);
                 var devicesToSendToVue = [];
                 for (var key in newVal.payload.devices) {
-                    var d = {};
-                    d.type = "unknown";
+                    var found = false;
+                    
+                    
+                   /* d.type = "unknown";
                     d.id = key;
                     d.shortAddress = newVal.payload.devices[key].shortAddress;
-                    d.name = newVal.payload.devices[key].name || "";
-                    
+                    d.name = newVal.payload.devices[key].name || "";*/
+                    var d = {};                    
                     for(var e in newVal.payload.devices[key].endpoints){
-                        
+
                         d.endpoint = e;
                         
                         for(var c in newVal.payload.devices[key].endpoints[e].clusters){
                             if(c === "0006"){
+                                d.id = key;
+                                d.shortAddress = newVal.payload.devices[key].shortAddress;
+                                d.name = newVal.payload.devices[key].name || "";
                                 d.type = "onoff";
-                                d.value = newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].value;
+                                d.lastUpdated = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].lastUpdated : '-');
+                                d.lastUpdated = "Il y a " + moment.duration(moment(Date.now()).diff(d.lastUpdated)).humanize()
+                                d.value = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].value : '-');
+                                devicesToSendToVue.push(d);
+                                found = true;
                             }
                             if(c === "0000"){
-                                d.manufacturer = newVal.payload.devices[key].endpoints[e].clusters[c]["0004"].value;
-                                d.model = newVal.payload.devices[key].endpoints[e].clusters[c]["0005"].value;
+                                d.id = key;
+                                d.shortAddress = newVal.payload.devices[key].shortAddress;
+                                d.name = newVal.payload.devices[key].name || "";
+                                d.manufacturer = (newVal.payload.devices[key].endpoints[e].clusters[c]["0004"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0004"].value : '-');
+                                d.model = (newVal.payload.devices[key].endpoints[e].clusters[c]["0005"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0005"].value : '-');
+                            }
+                            if(c === "0402"){
+                                d.id = key;
+                                d.shortAddress = newVal.payload.devices[key].shortAddress;
+                                d.name = newVal.payload.devices[key].name || "";
+                                d.type = "temperature";
+                                d.lastUpdated = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].lastUpdated : '-');
+                                d.lastUpdated = "Il y a " + moment.duration(moment(Date.now()).diff(d.lastUpdated)).humanize()
+                                d.value = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].value : '-');
+                                devicesToSendToVue.push(d);
+                                d = Object.assign({}, d);
+                                found = true;
+                            }
+                            if(c === "0405"){
+                                d.id = key;
+                                d.shortAddress = newVal.payload.devices[key].shortAddress;
+                                d.name = newVal.payload.devices[key].name || "";
+                                d.type = "humidity";
+                                d.lastUpdated = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].lastUpdated : '-');
+                                d.lastUpdated = "Il y a " + moment.duration(moment(Date.now()).diff(d.lastUpdated)).humanize()
+                                d.value = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].value : '-');
+                                devicesToSendToVue.push(d);
+                                d = Object.assign({}, d);
+                                found = true;
+                            }
+                            if(c === "0406"){
+                                d.id = key;
+                                d.shortAddress = newVal.payload.devices[key].shortAddress;
+                                d.name = newVal.payload.devices[key].name || "";
+                                d.type = "motionsensor";
+                                d.lastUpdated = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].lastUpdated : '-');
+                                d.lastUpdated = "Il y a " + moment.duration(moment(Date.now()).diff(d.lastUpdated)).humanize()
+                                d.value = (newVal.payload.devices[key].endpoints[e].clusters[c]["0000"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0000"].value : '-');
+                                devicesToSendToVue.push(d);
+                                found = true;
+                            }
+                            //Sensor cube
+                            if(c === "0012" && e === "02"){
+                                d.id = key;
+                                d.shortAddress = newVal.payload.devices[key].shortAddress;
+                                d.name = newVal.payload.devices[key].name || "";
+                                d.type = "multistate";
+                                d.lastUpdated = (newVal.payload.devices[key].endpoints[e].clusters[c]["0055"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0055"].lastUpdated : '-');
+                                d.lastUpdated = "Il y a " + moment.duration(moment(Date.now()).diff(d.lastUpdated)).humanize();
+                                d.value = (newVal.payload.devices[key].endpoints[e].clusters[c]["0055"] ? newVal.payload.devices[key].endpoints[e].clusters[c]["0055"].value : '-');
+                                devicesToSendToVue.push(d);
+                                found = true;
+                                if(d.value === 0 ){
+                                    d.valueString = "Shake";
+                                }else if(d.value >= 50 && d.value <= 120 ){
+                                    d.valueString = "90°";
+                                }else if(d.value >= 128 ){
+                                    d.valueString = "120°";
+                                }else if(d.value === 4 ){
+                                    d.valueString = "Vertical";
+                                }else{
+                                    d.valueString = item.value;
+                                }
                             }
                         }
                     }
                     
+                    if(found === false){
+                        var d = {};
+                        d.type = "unknown";
+                        d.id = key;
+                        d.shortAddress = newVal.payload.devices[key].shortAddress;
+                        d.name = newVal.payload.devices[key].name || "";
+                         devicesToSendToVue.push(d);
+                    }
                     
-                    devicesToSendToVue.push(d);
+                    
+                    // devicesToSendToVue.push(d);
                     //console.log(this.devices[key]);
                 }
                 vueApp.devices = devicesToSendToVue;
+                console.log("Devices To Dashboard", vueApp.devices)
                 vueApp.isLoaded = true;
             }
             if(newVal.topic == 'zigate_response'){
